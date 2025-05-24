@@ -1,0 +1,155 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="loader.css">
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h3><i class="fas fa-tachometer-alt"></i> Admin Panel</h3>
+  </div>
+  <div class="sidebar-menu">
+    <ul>
+      <li><a href="index.html" class="active"><i class="fas fa-users"></i> Users</a></li>
+      <li><a href="chapter.html"><i class="fas fa-book"></i> Chapters</a></li>
+      <li><a href="info.html"><i class="fas fa-info-circle"></i> Courses</a></li>
+      <li><a href="notification.html"><i class="fas fa-bell"></i> Notifications</a></li>
+      <li><a href="request.html"><i class="fas fa-hand-paper"></i> Requests</a></li>
+      <li><a href="shorts.html"><i class="fas fa-video"></i> Shorts</a></li>
+      <li><a href="slider.html"><i class="fas fa-images"></i> Slider</a></li>
+      <li><a href="upi_settings.html"><i class="fas fa-rupee-sign"></i> UPI Settings</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="header">
+    <div class="toggle-sidebar"><i class="fas fa-bars"></i></div>
+    <h2><i class="fas fa-users"></i> Users</h2>
+    <div></div>
+  </div>
+  
+  <div class="grid-container">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-user-plus"></i>
+      </div>
+      <div class="stat-info">
+        <h3 id="totalUsers">0</h3>
+        <p>Total Users</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, #ff9800, #e65100);">
+        <i class="fas fa-user-graduate"></i>
+      </div>
+      <div class="stat-info">
+        <h3 id="totalEnrollments">0</h3>
+        <p>Total Enrollments</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="table-container">
+    <table id="usersTable">
+      <thead>
+        <tr>
+          <th><i class="fas fa-user"></i> Name</th>
+          <th><i class="fas fa-envelope"></i> Email</th>
+          <th><i class="fas fa-mobile-alt"></i> Mobile</th>
+          <th><i class="fas fa-key"></i> Password</th>
+          <th><i class="fas fa-graduation-cap"></i> Courses</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="loader"><div class="loader"></div></div>
+<div id="customAlert" class="custom-alert"></div>
+
+<script>
+const scriptURL = 'https://script.google.com/macros/s/AKfycby67IGyCqfvbGFnHPx1MOOQdvG18AoA-OAESZNynsavV3eSO2y9GgDmMxp62LyJ_76nvA/exec';
+document.getElementById('loader').style.display = 'flex';
+
+function showAlert(message, type = 'error') {
+  const alert = document.getElementById('customAlert');
+  
+  let icon = '';
+  if (type === 'success') icon = '<i class="fas fa-check-circle"></i>';
+  else if (type === 'error') icon = '<i class="fas fa-exclamation-circle"></i>';
+  else if (type === 'warning') icon = '<i class="fas fa-exclamation-triangle"></i>';
+  
+  alert.innerHTML = icon + message;
+  alert.className = 'custom-alert ' + type;
+  alert.classList.add('show');
+  
+  setTimeout(() => {
+    alert.classList.remove('show');
+  }, 3000);
+}
+
+// Toggle sidebar on mobile
+document.querySelector('.toggle-sidebar').addEventListener('click', function() {
+  document.querySelector('.sidebar').classList.toggle('active');
+});
+
+function loadUsers() {
+  fetch(`${scriptURL}?action=get_users`)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.querySelector("#usersTable tbody");
+      
+      // Update stats
+      document.getElementById('totalUsers').textContent = data.length;
+      
+      let totalEnrollments = 0;
+      data.forEach(row => {
+        if (row[4] && row[4].trim() !== '') {
+          const courses = row[4].split(',');
+          totalEnrollments += courses.length;
+        }
+      });
+      document.getElementById('totalEnrollments').textContent = totalEnrollments;
+      
+      if (data.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="5" style="text-align: center;">No users found</td>`;
+        tbody.appendChild(tr);
+      } else {
+        data.forEach(row => {
+          const tr = document.createElement("tr");
+          
+          // Format the courses as badges if they exist
+          let coursesDisplay = '';
+          if (row[4] && row[4].trim() !== '') {
+            const courses = row[4].split(',');
+            coursesDisplay = courses.map(course => 
+              `<span class="badge badge-primary">${course.trim()}</span>`
+            ).join(' ');
+          } else {
+            coursesDisplay = '<span class="badge badge-danger">No courses</span>';
+          }
+          
+          tr.innerHTML = `
+            <td><i class="fas fa-user-circle" style="margin-right: 8px; color: var(--primary-color);"></i>${row[0]}</td>
+            <td><a href="mailto:${row[1]}">${row[1]}</a></td>
+            <td><a href="http://wa.me/91${row[2]}">${row[2]}</a></td>
+            <td>${row[3]}</td>
+            <td>${coursesDisplay}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+      
+      document.getElementById('loader').style.display = 'none';
+    })
+    .catch(error => {
+      showAlert("Failed to load users", "error");
+      document.getElementById('loader').style.display = 'none';
+    });
+}
+
+loadUsers();
+</script>
+  

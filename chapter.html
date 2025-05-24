@@ -1,0 +1,209 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="loader.css">
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h3><i class="fas fa-tachometer-alt"></i> Admin Panel</h3>
+  </div>
+  <div class="sidebar-menu">
+    <ul>
+      <li><a href="index.html"><i class="fas fa-users"></i> Users</a></li>
+      <li><a href="chapter.html" class="active"><i class="fas fa-book"></i> Chapters</a></li>
+      <li><a href="info.html"><i class="fas fa-info-circle"></i> Courses</a></li>
+      <li><a href="notification.html"><i class="fas fa-bell"></i> Notifications</a></li>
+      <li><a href="request.html"><i class="fas fa-hand-paper"></i> Requests</a></li>
+      <li><a href="shorts.html"><i class="fas fa-video"></i> Shorts</a></li>
+      <li><a href="slider.html"><i class="fas fa-images"></i> Slider</a></li>
+      <li><a href="upi_settings.html"><i class="fas fa-rupee-sign"></i> UPI Settings</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="header">
+    <div class="toggle-sidebar"><i class="fas fa-bars"></i></div>
+    <h2><i class="fas fa-book"></i> Chapters</h2>
+    <div></div>
+  </div>
+  
+  <div class="form">
+    <div class="form-row">
+      <div class="form-group">
+        <label><i class="fas fa-heading"></i> Chapter Title</label>
+        <input type="text" id="title" placeholder="Enter chapter title" class="int">
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-book-open"></i> Course</label>
+        <select id="selectCourse" class="int"></select>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label><i class="fas fa-align-left"></i> Chapter Description</label>
+      <textarea id="desc" placeholder="Enter chapter description" class="txtar"></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label><i class="fas fa-link"></i> Video URL</label>
+      <input type="text" id="url" placeholder="Enter video URL" class="int">
+    </div>
+    
+    <button onclick="submitChapter()" class="btn"><i class="fas fa-plus-circle"></i> Add Chapter</button>
+  </div>
+  
+  <div class="table-container">
+    <table id="chapterTable">
+      <thead>
+        <tr>
+          <th><i class="fas fa-book-open"></i> Course</th>
+          <th><i class="fas fa-heading"></i> Title</th>
+          <th><i class="fas fa-align-left"></i> Description</th>
+          <th><i class="fas fa-play-circle"></i> Video</th>
+          <th><i class="fas fa-cogs"></i> Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="loader"><div class="loader"></div></div>
+<div id="customAlert" class="custom-alert"></div>
+
+<script>
+const scriptURL = 'https://script.google.com/macros/s/AKfycbwV6koFf8RKZ5fATACPd1-LBwWQdDKPZ-X1VjXkFLWaBBQIEXHxOGsTGRex20RrFcgUuQ/exec';
+document.getElementById('loader').style.display = 'none';
+
+function showAlert(message, type = 'error') {
+  const alert = document.getElementById('customAlert');
+  
+  let icon = '';
+  if (type === 'success') icon = '<i class="fas fa-check-circle"></i>';
+  else if (type === 'error') icon = '<i class="fas fa-exclamation-circle"></i>';
+  else if (type === 'warning') icon = '<i class="fas fa-exclamation-triangle"></i>';
+  
+  alert.innerHTML = icon + message;
+  alert.className = 'custom-alert ' + type;
+  alert.classList.add('show');
+  
+  setTimeout(() => {
+    alert.classList.remove('show');
+  }, 3000);
+}
+
+// Toggle sidebar on mobile
+document.querySelector('.toggle-sidebar').addEventListener('click', function() {
+  document.querySelector('.sidebar').classList.toggle('active');
+});
+
+function loadCourses() {
+  fetch(`${scriptURL}?action=get_courses`)
+    .then(res => res.json())
+    .then(data => {
+      const select = document.getElementById('selectCourse');
+      data.forEach(course => {
+        const option = document.createElement('option');
+        option.value = course;
+        option.innerText = course;
+        select.appendChild(option);
+      });
+    });
+}
+
+function submitChapter() {
+  const course = document.getElementById('selectCourse').value;
+  const title = document.getElementById('title').value;
+  const desc = document.getElementById('desc').value;
+  const url = document.getElementById('url').value;
+  
+  if (!course || !title || !desc || !url) {
+    showAlert("All fields required", "warning");
+    return;
+  }
+  
+  document.getElementById('loader').style.display = 'flex';
+  fetch(scriptURL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'add_chapter', course, title, desc, url })
+  })
+  .then(() => {
+    showAlert("Chapter added successfully!", "success");
+    // Clear form fields
+    document.getElementById('title').value = '';
+    document.getElementById('desc').value = '';
+    document.getElementById('url').value = '';
+    
+    // Reload data without refreshing the page
+    document.getElementById('chapterTable').querySelector('tbody').innerHTML = '';
+    loadChapters();
+    document.getElementById('loader').style.display = 'none';
+  })
+  .catch(() => {
+    showAlert("Failed to add chapter", "error");
+    document.getElementById('loader').style.display = 'none';
+  });
+}
+
+function loadChapters() {
+  document.getElementById('loader').style.display = 'flex';
+  fetch(`${scriptURL}?action=get_chapters`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('loader').style.display = 'none';
+      const tbody = document.querySelector('#chapterTable tbody');
+      
+      if (data.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="5" style="text-align: center;">No chapters found</td>`;
+        tbody.appendChild(tr);
+        return;
+      }
+      
+      data.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        
+        // Truncate description for display
+        const shortDesc = row[2].length > 80 ? row[2].substring(0, 80) + '...' : row[2];
+        
+        tr.innerHTML = `
+          <td><span class="badge badge-primary">${row[0]}</span></td>
+          <td>${row[1]}</td>
+          <td>${shortDesc}</td>
+          <td><a href="${row[3]}" target="_blank" class="btn"><i class="fas fa-play"></i> Play</a></td>
+          <td class="action-cell">
+            <button onclick="deleteChapter(${index + 1})" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(error => {
+      document.getElementById('loader').style.display = 'none';
+      showAlert("Failed to load chapters", "error");
+    });
+}
+
+function deleteChapter(rowIndex) {
+  if (confirm("Are you sure you want to delete this chapter?")) {
+    document.getElementById('loader').style.display = 'flex';
+    fetch(scriptURL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete_chapter', row: rowIndex + 1 })
+    })
+    .then(() => {
+      showAlert("Chapter deleted successfully!", "success");
+      // Reload data without refreshing the page
+      document.getElementById('chapterTable').querySelector('tbody').innerHTML = '';
+      loadChapters();
+    })
+    .catch(() => {
+      showAlert("Failed to delete chapter", "error");
+      document.getElementById('loader').style.display = 'none';
+    });
+  }
+}
+
+loadCourses();
+loadChapters();
+</script>

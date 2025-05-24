@@ -1,0 +1,105 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="loader.css">
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h3><i class="fas fa-tachometer-alt"></i> Admin Panel</h3>
+  </div>
+  <div class="sidebar-menu">
+    <ul>
+      <li><a href="index.html"><i class="fas fa-users"></i> Users</a></li>
+      <li><a href="chapter.html"><i class="fas fa-book"></i> Chapters</a></li>
+      <li><a href="info.html"><i class="fas fa-info-circle"></i> Courses</a></li>
+      <li><a href="notification.html"><i class="fas fa-bell"></i> Notifications</a></li>
+      <li><a href="request.html"><i class="fas fa-hand-paper"></i> Requests</a></li>
+      <li><a href="shorts.html"><i class="fas fa-video"></i> Shorts</a></li>
+      <li><a href="slider.html"><i class="fas fa-images"></i> Slider</a></li>
+      <li><a href="upi_settings.html" class="active"><i class="fas fa-rupee-sign"></i> UPI Settings</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="header">
+    <h2>UPI Settings</h2>
+  </div>
+  
+  <div class="form">
+    <input type="text" id="merchant" placeholder="Merchant Name" class="int">
+    <input type="text" id="upi" placeholder="UPI ID" class="int">
+    <button onclick="updateUPI()" class="btn">Update UPI</button>
+  </div>
+  
+  <table id="upiTable">
+    <thead>
+      <tr>
+        <th>Merchant Name</th>
+        <th>UPI ID</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div id="loader"><div class="loader"></div></div>
+<div id="customAlert" class="custom-alert"></div>
+
+<script>
+const scriptURL = 'https://script.google.com/macros/s/AKfycbyp4PasaZ5KfGoaR0bwKUA0hOPnpA4InQTrqxhD2V5Za0_irpXtE6lwkjKYgwT4mbugHQ/exec';
+document.getElementById("loader").style.display = "none";
+
+function showAlert(message, type = 'error') {
+  const alert = document.getElementById('customAlert');
+  alert.textContent = message;
+  alert.className = 'custom-alert ' + type;
+  alert.classList.add('show');
+  
+  setTimeout(() => {
+    alert.classList.remove('show');
+  }, 3000);
+}
+
+function updateUPI() {
+  const merchant = document.getElementById("merchant").value;
+  const upi = document.getElementById("upi").value;
+  
+  if (!merchant || !upi) {
+    showAlert("All fields are required", "warning");
+    return;
+  }
+  
+  document.getElementById("loader").style.display = "flex";
+  fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify({ action: "update_upi", merchant: merchant, upi: upi })
+  })
+  .then(() => {
+    showAlert("UPI settings updated successfully", "success");
+    location.reload();
+  })
+  .catch(error => {
+    showAlert("Failed to update UPI settings", "error");
+    document.getElementById("loader").style.display = "none";
+  });
+}
+
+function loadUPI() {
+  document.getElementById("loader").style.display = "flex";
+  fetch(`${scriptURL}?action=get_upi`)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.querySelector("#upiTable tbody");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${data[0]}</td><td>${data[1]}</td>`;
+      tbody.appendChild(tr);
+      document.getElementById("loader").style.display = "none";
+    })
+    .catch(error => {
+      showAlert("Failed to load UPI settings", "error");
+      document.getElementById("loader").style.display = "none";
+    });
+}
+
+loadUPI();
+</script>

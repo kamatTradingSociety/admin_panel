@@ -1,0 +1,110 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="loader.css">
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h3><i class="fas fa-tachometer-alt"></i> Admin Panel</h3>
+  </div>
+  <div class="sidebar-menu">
+    <ul>
+      <li><a href="index.html"><i class="fas fa-users"></i> Users</a></li>
+      <li><a href="chapter.html"><i class="fas fa-book"></i> Chapters</a></li>
+      <li><a href="info.html"><i class="fas fa-info-circle"></i> Courses</a></li>
+      <li><a href="notification.html"><i class="fas fa-bell"></i> Notifications</a></li>
+      <li><a href="request.html"><i class="fas fa-hand-paper"></i> Requests</a></li>
+      <li><a href="shorts.html" class="active"><i class="fas fa-video"></i> Shorts</a></li>
+      <li><a href="slider.html"><i class="fas fa-images"></i> Slider</a></li>
+      <li><a href="upi_settings.html"><i class="fas fa-rupee-sign"></i> UPI Settings</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="header">
+    <h2>Upload YouTube Shorts</h2>
+  </div>
+  
+  <div class="form">
+    <div style="margin-bottom: 15px;">
+      <div id="previewContainer" style="display: none; margin-bottom: 15px;">
+        <div style="position: relative; width: 100%; max-width: 320px; margin: 0 auto;">
+          <iframe id="videoPreview" width="100%" height="240" frameborder="0" allowfullscreen style="border-radius: 8px;"></iframe>
+        </div>
+      </div>
+      <input type="url" id="youtubeUrl" placeholder="YouTube URL (shorts or regular video)" class="int" />
+      <button onclick="previewVideo()" class="btn" style="margin-top: 10px;">Preview</button>
+    </div>
+    <button onclick="submitVideo()" class="btn">Upload Short</button>
+  </div>
+</div>
+
+<div id="loader"><div class="loader"></div></div>
+<div id="customAlert" class="custom-alert"></div>
+
+<script>
+  document.getElementById('loader').style.display = 'none';
+  
+  function showAlert(message, type = 'error') {
+    const alert = document.getElementById('customAlert');
+    alert.textContent = message;
+    alert.className = 'custom-alert ' + type;
+    alert.classList.add('show');
+    
+    setTimeout(() => {
+      alert.classList.remove('show');
+    }, 3000);
+  }
+  
+  function extractVideoId(url) {
+    const regex = /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  }
+  
+  function previewVideo() {
+    const url = document.getElementById('youtubeUrl').value;
+    const videoId = extractVideoId(url);
+    
+    if (!videoId) {
+      showAlert("Invalid YouTube URL", "warning");
+      return;
+    }
+    
+    const previewContainer = document.getElementById('previewContainer');
+    const videoPreview = document.getElementById('videoPreview');
+    
+    videoPreview.src = `https://www.youtube.com/embed/${videoId}`;
+    previewContainer.style.display = 'block';
+  }
+  
+  function submitVideo() {
+    const url = document.getElementById('youtubeUrl').value;
+    const videoId = extractVideoId(url);
+    
+    if (!videoId) {
+      showAlert("Invalid YouTube URL", "warning");
+      return;
+    }
+    
+    document.getElementById('loader').style.display = 'flex';
+    const formData = new FormData();
+    formData.append("videoId", videoId);
+    
+    fetch("https://script.google.com/macros/s/AKfycbwy-S2VE5SdZiI4T_lHTiQVbXRl2N_S2NM3ijqm58RtTDUbXMw3w1Ur8LYHIW5yMXx2iQ/exec", {
+      method: "POST",
+      body: formData
+    })
+    .then(() => {
+      showAlert("Short uploaded successfully!", "success");
+      document.getElementById('youtubeUrl').value = '';
+      document.getElementById('previewContainer').style.display = 'none';
+      document.getElementById('loader').style.display = 'none';
+    })
+    .catch(() => {
+      showAlert("Failed to upload short", "error");
+      document.getElementById('loader').style.display = 'none';
+    });
+  }
+</script>
+  

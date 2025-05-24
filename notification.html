@@ -1,0 +1,113 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="loader.css">
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h3><i class="fas fa-tachometer-alt"></i> Admin Panel</h3>
+  </div>
+  <div class="sidebar-menu">
+    <ul>
+      <li><a href="index.html"><i class="fas fa-users"></i> Users</a></li>
+      <li><a href="chapter.html"><i class="fas fa-book"></i> Chapters</a></li>
+      <li><a href="info.html"><i class="fas fa-info-circle"></i> Courses</a></li>
+      <li><a href="notification.html" class="active"><i class="fas fa-bell"></i> Notifications</a></li>
+      <li><a href="request.html"><i class="fas fa-hand-paper"></i> Requests</a></li>
+      <li><a href="shorts.html"><i class="fas fa-video"></i> Shorts</a></li>
+      <li><a href="slider.html"><i class="fas fa-images"></i> Slider</a></li>
+      <li><a href="upi_settings.html"><i class="fas fa-rupee-sign"></i> UPI Settings</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="header">
+    <div class="toggle-sidebar"><i class="fas fa-bars"></i></div>
+    <h2><i class="fas fa-bell"></i> Send Notification</h2>
+    <div></div>
+  </div>
+
+  <div class="card">
+    <div style="margin-bottom: 20px; text-align: center;">
+      <div class="stat-icon" style="width: 80px; height: 80px; margin: 0 auto 15px auto; background: linear-gradient(135deg, #ff9800, #e65100);">
+        <i class="fas fa-bell" style="font-size: 32px;"></i>
+      </div>
+      <p style="color: #666; font-size: 16px;">Send push notifications to all users of your app</p>
+    </div>
+  
+    <div class="form">
+      <div class="form-group">
+        <label><i class="fas fa-heading"></i> Notification Title</label>
+        <input type="text" id="notificationTitle" placeholder="Enter notification title" class="int" />
+      </div>
+      
+      <div class="form-group">
+        <label><i class="fas fa-comment-alt"></i> Notification Message</label>
+        <textarea id="notificationMessage" placeholder="Enter notification message" class="txtar"></textarea>
+      </div>
+      
+      <button onclick="sendNotification()" class="btn"><i class="fas fa-paper-plane"></i> Send Notification</button>
+    </div>
+  </div>
+</div>
+
+<div id="loader"><div class="loader"></div></div>
+<div id="customAlert" class="custom-alert"></div>
+
+<script>
+  document.getElementById('loader').style.display = 'none';
+
+  function showAlert(message, type = 'error') {
+    const alert = document.getElementById('customAlert');
+    
+    let icon = '';
+    if (type === 'success') icon = '<i class="fas fa-check-circle"></i>';
+    else if (type === 'error') icon = '<i class="fas fa-exclamation-circle"></i>';
+    else if (type === 'warning') icon = '<i class="fas fa-exclamation-triangle"></i>';
+    
+    alert.innerHTML = icon + message;
+    alert.className = 'custom-alert ' + type;
+    alert.classList.add('show');
+    
+    setTimeout(() => {
+      alert.classList.remove('show');
+    }, 3000);
+  }
+
+  // Toggle sidebar on mobile
+  document.querySelector('.toggle-sidebar').addEventListener('click', function() {
+    document.querySelector('.sidebar').classList.toggle('active');
+  });
+
+  function sendNotification() {
+    const title = document.getElementById('notificationTitle').value;
+    const message = document.getElementById('notificationMessage').value;
+    
+    if (!title || !message) {
+      showAlert("Title and message are required", "warning");
+      return;
+    }
+    
+    document.getElementById('loader').style.display = 'flex';
+    
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('message', message);
+    
+    fetch('https://script.google.com/macros/s/AKfycbzwzo1MO-AE4v5KtGZzcZfsFnydjwMLMjzwHD1IrAeOSijdHS-tCgMKgK3dbRFd1juNoQ/exec', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.text())
+    .then(() => {
+      showAlert("Notification sent successfully!", "success");
+      document.getElementById('notificationTitle').value = '';
+      document.getElementById('notificationMessage').value = '';
+      document.getElementById('loader').style.display = 'none';
+    })
+    .catch(() => {
+      showAlert("Failed to send notification", "error");
+      document.getElementById('loader').style.display = 'none';
+    });
+  }
+</script>
